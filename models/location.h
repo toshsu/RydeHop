@@ -1,14 +1,17 @@
 #ifndef LOCATION_H
 #define LOCATION_H
-
-typedef struct {
-    char *address;
+#define MAX 100
+#define pi 3.142
+#define R 6371.0
+ struct Location {
+    char address[MAX];
     double latitude;
     double longitude;
-} Location;
-
-Location* create_location(char *address, double lat, double lon);
-double calculate_distance(Location *loc1, Location *loc2);
-void free_location(Location *location);
+} ;
+struct Location* create_location(const char* address, double latitude, double longitude);
+int validate_location(struct Location* loc);
+double calculate_distance(struct Location* loc1, struct Location* loc2);
+void print_location(struct Location* loc);
+void free_location(struct Location* loc);
 
 #endif

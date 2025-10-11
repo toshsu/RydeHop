@@ -10,7 +10,7 @@ Ride* create_ride(int id, User *rider, Location *pickup, Location *dropoff, doub
     ride->pickup = pickup;
     ride->dropoff = dropoff;
     ride->distance = distance;
-    ride->fare = distance * 1.5; // Base fare calculation
+    ride->fare = distance * 1.5; 
     ride->status = RIDE_REQUESTED;
     ride->request_time = time(NULL);
     ride->start_time = 0;

@@ -2,8 +2,7 @@
 #define HOPPER_H
 
 #define MAX 100
-struct User
-{
+struct User {
     char username[MAX];
     char password[20];
     char phone[MAX];
@@ -12,8 +11,7 @@ struct User
     char emergency[2][MAX];
 };
 
-struct Ride
-{
+struct Ride {
     char username[MAX];
     char pickup[MAX];
     char drop[MAX];
@@ -25,14 +23,13 @@ struct Ride
 };
 void validatePhone(char phone[]);
 void validateEmail(char email[]);
-void inputAdditionalInfo(struct User user);
 void saveUser(struct User u);
+void inputAdditionalInfo(struct User *user);
 struct User signin();
 int loginUser(struct User *loggedUser);
-
-struct Ride rideinfo(char username[]);
-void saveRide(struct Ride r);
-void bookRide(struct User loggedUser);
+void createRideForUser(struct User *loggedUser);
 void saveRideRequest(struct Ride r);
+void searchRides(char pickup[], char drop[], char date[]);
+void hopperMenu(struct User loggedUser);
 
 #endif

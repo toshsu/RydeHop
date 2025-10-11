@@ -1,12 +1,9 @@
 #include "hopper.h"
+#include "ride.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <stdio.h>
-
-#define MAX 100
-
-// ----------- User Functions -----------
 
 void validatePhone(char phone[])
 {
@@ -43,30 +40,37 @@ void saveUser(struct User u)
     }
 }
 
-void inputAdditionalInfo(struct User user)
+void inputAdditionalInfo(struct User *user)
 {
     printf("Enter gender: ");
-    scanf("%s", user.gender);
+    scanf("%s", user->gender);
+
     printf("Enter two emergency contacts: ");
-    scanf("%s", user.emergency[0]);
-    scanf("%s", user.emergency[1]);
-    saveUser(user);
+    scanf("%s %s", user->emergency[0], user->emergency[1]);
+
+    saveUser(*user);
 }
 
 struct User signin()
 {
     struct User user;
+
     printf("Enter username: ");
     scanf("%s", user.username);
+
     printf("Enter password: ");
     scanf("%s", user.password);
+
     printf("Enter phone number: ");
     scanf("%s", user.phone);
     validatePhone(user.phone);
+
     printf("Enter email: ");
     scanf("%s", user.email);
     validateEmail(user.email);
-    inputAdditionalInfo(user);
+
+    inputAdditionalInfo(&user);
+
     return user;
 }
 
@@ -74,13 +78,15 @@ int loginUser(struct User *loggedUser)
 {
     char username[MAX];
     char password[20];
+
     printf("Enter username: ");
     scanf("%s", username);
+
     printf("Enter password: ");
     scanf("%s", password);
 
     FILE *p = fopen("users.txt", "r");
-    if (p == NULL)
+    if (!p)
     {
         printf("No user found. Please sign up first.\n");
         return 0;
@@ -105,69 +111,35 @@ int loginUser(struct User *loggedUser)
     return 0;
 }
 
-// ----------- Ride Functions -----------
-
-void saveRideRequest(struct Ride r)
+void searchRides(char pickup[], char drop[], char date[])
 {
-    FILE *p = fopen("rideRequests.txt", "a"); // ride requests pending driver acceptance
-    if (p != NULL)
+    FILE *p = fopen("rideRequests.txt", "r");
+    if (!p)
     {
-        fprintf(p, "%s %s %s %s %s %s %s %s\n",
-                r.username, r.pickup, r.drop, r.vehiclePreference,
-                r.seatPreference, r.rideDate, r.rideTime, r.additionalNotes);
-        printf("Ride request saved successfully. Waiting for driver approval.\n");
-        fclose(p);
+        printf("No ride requests found.\n");
+        return;
     }
-    else
-    {
-        printf("Error opening ride requests file!\n");
-    }
-}
 
-struct Ride rideinfo(char username[])
-{
     struct Ride r;
-    strcpy(r.username, username);
-
-    printf("Enter pickup location: ");
-    scanf(" %[^\n]", r.pickup);
-
-    printf("Enter drop location: ");
-    scanf(" %[^\n]", r.drop);
-
-    printf("Enter vehicle preference (car/bike): ");
-    scanf("%s", r.vehiclePreference);
-
-    printf("Enter seat preference (front/back): ");
-    scanf("%s", r.seatPreference);
-
-    printf("Enter ride date (DD/MM/YYYY) or press Enter for now: ");
-    scanf(" %[^\n]", r.rideDate);
-
-    printf("Enter ride time (HH:MM) or press Enter for now: ");
-    scanf(" %[^\n]", r.rideTime);
-
-    printf("Enter additional notes (optional): ");
-    scanf(" %[^\n]", r.additionalNotes);
-
-    // Real-time defaults
-    if (strlen(r.rideDate) == 0 || strlen(r.rideTime) == 0)
+    int found = 0;
+    while (fscanf(p, "%s %s %s %s %s %s %s %s",
+                  r.username, r.pickup, r.drop, r.vehiclePreference,
+                  r.seatPreference, r.rideDate, r.rideTime, r.additionalNotes) != EOF)
     {
-        time_t t = time(NULL);
-        struct tm tm = *localtime(&t);
-
-        if (strlen(r.rideDate) == 0)
-            snprintf(r.rideDate, sizeof(r.rideDate), "%02d/%02d/%04d", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900);
-        if (strlen(r.rideTime) == 0)
-            snprintf(r.rideTime, sizeof(r.rideTime), "%02d:%02d", tm.tm_hour, tm.tm_min);
+        if ((strcmp(r.pickup, pickup) == 0 || strlen(pickup) == 0) &&
+            (strcmp(r.drop, drop) == 0 || strlen(drop) == 0) &&
+            (strcmp(r.rideDate, date) == 0 || strlen(date) == 0))
+        {
+            printf("User: %s | Pickup: %s | Drop: %s | Date: %s | Time: %s\n",
+                   r.username, r.pickup, r.drop, r.rideDate, r.rideTime);
+            found = 1;
+        }
     }
 
-    saveRideRequest(r); // save as request
-    return r;
+    if (!found)
+        printf("No rides found matching your criteria.\n");
+
+    fclose(p);
 }
 
-void bookRide(struct User loggedUser)
-{
-    struct Ride r = rideinfo(loggedUser.username); // collects ride request
-    // Do NOT save as final ride; driver module handles acceptance
-}
+
