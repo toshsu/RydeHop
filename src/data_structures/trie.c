@@ -1,62 +1,39 @@
-#include "trie.h"
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-
-Trie* create_trie() {
-    Trie *trie = (Trie*)malloc(sizeof(Trie));
-    trie->root = (TrieNode*)calloc(1, sizeof(TrieNode));
-    return trie;
-}
-
-int char_to_index(char c) {
-    c = tolower(c);
-    if (c >= 'a' && c <= 'z') return c - 'a';
-    return -1;
-}
-
-void trie_insert(Trie *trie, char *key, void *data) {
-    TrieNode *current = trie->root;
-    
-    for (int i = 0; key[i] != '\0'; i++) {
-        int index = char_to_index(key[i]);
-        if (index == -1) continue;
-        
-        if (current->children[index] == NULL) {
-            current->children[index] = (TrieNode*)calloc(1, sizeof(TrieNode));
-        }
-        current = current->children[index];
-    }
-    
-    current->is_end_of_word = 1;
-    current->data = data;
-}
-
-void* trie_search(Trie *trie, char *key) {
-    TrieNode *current = trie->root;
-    
-    for (int i = 0; key[i] != '\0'; i++) {
-        int index = char_to_index(key[i]);
-        if (index == -1 || current->children[index] == NULL) {
-            return NULL;
-        }
-        current = current->children[index];
-    }
-    
-    return (current != NULL && current->is_end_of_word) ? current->data : NULL;
-}
-
-void free_trie_recursive(TrieNode *node) {
+// Helper function to recursively collect suggestions
+static void collect_suggestions(TrieNode *node, char *buffer, int depth, void (*callback)(char*, void*)) {
     if (node == NULL) return;
-    
-    for (int i = 0; i < ALPHABET_SIZE; i++) {
-        free_trie_recursive(node->children[i]);
+
+    if (node->is_end_of_word) {
+        buffer[depth] = '\0';
+        callback(buffer, node->data);
     }
-    
-    free(node);
+
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        if (node->children[i]) {
+            buffer[depth] = 'a' + i;
+            collect_suggestions(node->children[i], buffer, depth + 1, callback);
+        }
+    }
 }
 
-void free_trie(Trie *trie) {
-    free_trie_recursive(trie->root);
-    free(trie);
+// Autocomplete suggestions based on prefix
+void trie_autocomplete(Trie *trie, const char *prefix, void (*callback)(char*, void*)) {
+    TrieNode *current = trie->root;
+    int len = strlen(prefix);
+
+    for (int i = 0; i < len; i++) {
+        char ch = tolower(prefix[i]);
+        if (ch < 'a' || ch > 'z')
+            continue;
+
+        int index = ch - 'a';
+        if (!current->children[index])
+            return; // No suggestions found
+
+        current = current->children[index];
+    }
+
+    char buffer[100];
+    strcpy(buffer, prefix);
+    collect_suggestions(current, buffer, strlen(prefix), callback);
+
 }
